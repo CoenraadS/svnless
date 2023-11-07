@@ -4,24 +4,10 @@ using SvnLess.Extensions;
 
 namespace SvnLess.Actions;
 
-internal static class Constants
-{
-    public const string SVN_BRANCH_NAME = "SVN";
-
-    public const string DEFAULT_EMAIL = "unknown@example.com";
-
-    public const string UNKNOWN = "Unknown";
-}
-
 internal static class Init
 {
     public static async Task ExecuteAsync(string gitPath, SvnRepo svn)
     {
-#if DEBUG
-        ForceDeleteDirectory.Execute(gitPath);
-        Directory.CreateDirectory(gitPath);
-#endif
-
         Repository.Init(gitPath);
         using var repo = new Repository(gitPath);
 

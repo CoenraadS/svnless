@@ -15,9 +15,9 @@ internal static partial class ContextExtensions
 
         for (long i = localRevision; i < latestRevision; i++)
         {
-            var diff = context.GetGitDiff(i, i + 1);
+            var diff = context.Svn.GetGitDiff(i, i + 1);
 
-            await context.ApplyGitDiffAsync(diff);
+            await context.ApplyDiffToGitRepository(diff);
 
             var svnLogArgs = new SvnLogArgs
             {
@@ -50,7 +50,7 @@ internal static partial class ContextExtensions
     {
         var git = context.Git;
         var localRevision = git.GetLatestLocalRevision();
-        git.CheckoutSVNBranch();
+        git.CheckoutRevisionBranch();
 
         var latestRevision = requestedRevision ?? (await context.Svn.InfoAsync()).Revision;
 
@@ -66,7 +66,7 @@ internal static partial class ContextExtensions
 
         git.CheckoutBranch(Constants.SVN_BRANCH_NAME);
 
-        Directory.Delete(context.Svn.LocalPath, true);
+        Directory.Delete(context.Svn.GitPath, true);
 
         context.Svn.Export();
 

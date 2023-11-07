@@ -5,7 +5,7 @@ namespace SvnLess.Extensions;
 
 public static class RepositoryExtensions
 {
-    public static Branch CheckoutSVNBranch(this Repository repository) => repository.CheckoutBranch(Constants.SVN_BRANCH_NAME);
+    public static Branch CheckoutRevisionBranch(this Repository repository) => repository.CheckoutBranch(Constants.SVN_BRANCH_NAME);
     public static Branch GetSVNBranch(this Repository repository) => repository.Branches[Constants.SVN_BRANCH_NAME];
 
     public static long GetLatestLocalRevision(this Repository repository)

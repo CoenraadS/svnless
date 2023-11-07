@@ -1,4 +1,5 @@
 ﻿using SharpSvn;
+using SvnLess.Classes;
 using System.Text;
 
 namespace SvnLess.Extensions;
@@ -19,7 +20,7 @@ internal static class SvnClientExtensions
 
     public static SvnUpdateResult Export(this SvnRepo svn)
     {
-        if (svn.Client.Export(svn.Remote.Uri, svn.LocalPath, out var result))
+        if (svn.Client.Export(svn.Remote.Uri, svn.GitPath, out var result))
         {
             return result;
         }
@@ -36,14 +37,15 @@ internal static class SvnClientExtensions
         return result;
     }
 
-    public static string Diff(this SvnRepo svn, long from, long to, SvnDiffArgs args)
+    public static SVNToGitDiff GetGitDiff(this SvnRepo svn, long from, long to)
     {
         using var ms = new MemoryStream();
         var fromTarget = new SvnUriTarget(svn, from);
         var toTarget = new SvnUriTarget(svn, to);
 
-        svn.Client.Diff(fromTarget, toTarget, args, ms);
-        var diff = Encoding.UTF8.GetString(ms.ToArray());
-        return diff;
+        svn.Client.Diff(fromTarget, toTarget, new SvnDiffArgs() { UseGitFormat = true }, ms);
+        var diffString = Encoding.UTF8.GetString(ms.ToArray());
+
+        return new SVNToGitDiff(diffString, from, to);
     }
 }
