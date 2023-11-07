@@ -24,21 +24,29 @@ internal partial class Program
 
     private static void Main(string[] args)
     {
-        HandleArgs(args);
+        try
+        {
+            HandleArgs(args);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+            throw;
+        }
     }
 
-    private static void HandleArgs(string[] args) => Parser.Default.ParseArguments<Options>(args).WithParsed(async o =>
+    private static void HandleArgs(string[] args) => Parser.Default.ParseArguments<Options>(args).WithParsed(o =>
     {
         if (o.Action == Action.Unknown)
         {
             throw new InvalidOperationException("Failed to parse action");
         }
 
-        var svnRepo = new SvnRepo(new SvnClient(), new SvnUriTarget(o.SVNRemote), Path.Combine(o.GitLocal, Constants.SVN_GIT_DIR), o.SVNLocal);
+        var svnRepo = new SvnRepo(new SvnClient(), new SvnUriTarget(o.SVNRemote), Path.Combine(o.GitLocal), o.SVNLocal);
 
         if (o.Action == Action.GitInit)
         {
-            await Init.ExecuteAsync(o.GitLocal, svnRepo);
+            Init.ExecuteAsync(o.GitLocal, svnRepo).Wait();
             return;
         }
 
@@ -53,21 +61,21 @@ internal partial class Program
         if (o.Action == Action.GitToSVNSync)
         {
             // If there is exactly one commit difference until a Revision Tag, apply that commit from Git -> SVN
-            var revision = await GitToSVNSyncAsync(context);
+            var revision = GitToSVNSyncAsync(context).GetAwaiter().GetResult();
             Console.WriteLine($"Updated SVN to Revision {revision}");
             return;
         }
 
         if (o.Action == Action.SVNToGitDiffSync)
         {
-            var revision = await context.IterateToLatestRevision();
+            var revision = context.IterateToLatestRevision().GetAwaiter().GetResult();
             Console.WriteLine($"Updated Git to Revision {revision}");
             return;
         }
 
         if (o.Action == Action.SVNToGitRemakeSync)
         {
-            var revision = await context.FastForwardToLatestRevision();
+            var revision = context.FastForwardToLatestRevision().GetAwaiter().GetResult();
             Console.WriteLine($"Updated Git to Revision {revision}");
             return;
         }
@@ -92,25 +100,23 @@ internal partial class Program
             throw new InvalidOperationException($"There are no changes to sync");
         }
 
-        var tagName = split[1];
-
-        if (!tagName.StartsWith(Constants.REVISION))
+        if (!description.StartsWith(Constants.REVISION))
         {
-            throw new InvalidOperationException($"Non revision tag encountered: {tagName}");
+            throw new InvalidOperationException($"Non revision tag encountered: {description}");
         }
 
-        var revision = long.Parse(tagName[$"{Constants.REVISION}/".Length..]);
+        var commitCountSinceLastRevisionTag = int.Parse(split[1]);
 
-        var commitCount = int.Parse(split[1]);
-
-        if (commitCount > 1)
+        if (commitCountSinceLastRevisionTag > 1)
         {
-            throw new InvalidOperationException($"Squash your changes, so only 1 commit will be synced. Currently {commitCount} commits present");
+            throw new InvalidOperationException($"Squash your changes, so only 1 commit will be synced. Currently {commitCountSinceLastRevisionTag} commits present");
         }
+
+        var revision = long.Parse(split[0][$"{Constants.REVISION}/".Length..]);
 
         var previousCommit = currentBranch.Commits.Skip(1).First();
 
-        var diff = context.Git.Diff.Compare<Patch>(commit.Tree, previousCommit.Tree, new CompareOptions());
+        var diff = context.Git.Diff.Compare<Patch>(previousCommit.Tree, commit.Tree, new CompareOptions());
 
         var gitToSVNDiff = new GitToSVNDiff(diff, revision, commit.Message);
 

@@ -13,12 +13,12 @@ internal static partial class ContextExtensions
         await Task.Run(async () =>
         {
             var processStartInfo = new ProcessStartInfo();
-            processStartInfo.WorkingDirectory = new DirectoryInfo(context.Git.Info.Path).Parent!.FullName;
+            processStartInfo.WorkingDirectory = context.Svn.RealSvnPath;
             processStartInfo.RedirectStandardInput = true;
             processStartInfo.RedirectStandardError = true;
             processStartInfo.UseShellExecute = false;
             processStartInfo.FileName = "git";
-            processStartInfo.Arguments = $"apply --directory={context.Svn.RealSvnPath} --ignore-space-change --ignore-whitespace --whitespace=nowarn";
+            processStartInfo.Arguments = $"apply --ignore-space-change --ignore-whitespace --whitespace=nowarn --unsafe-paths";
 
             var process = new Process
             {
@@ -64,7 +64,7 @@ internal static partial class ContextExtensions
             processStartInfo.RedirectStandardError = true;
             processStartInfo.UseShellExecute = false;
             processStartInfo.FileName = "git";
-            processStartInfo.Arguments = $"apply --directory={Constants.SVN_GIT_DIR} --ignore-space-change --ignore-whitespace --whitespace=nowarn";
+            processStartInfo.Arguments = $"apply --ignore-space-change --ignore-whitespace --whitespace=nowarn";
 
             var process = new Process
             {

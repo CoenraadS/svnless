@@ -8,7 +8,5 @@ internal static class Constants
 
     public const string UNKNOWN = "Unknown";
 
-    public const string SVN_GIT_DIR = "svn"; // The svn directory inside the git repository
-
     public const string REVISION = "Revision";
 }

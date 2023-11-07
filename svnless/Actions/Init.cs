@@ -7,12 +7,7 @@ namespace SvnLess.Actions;
 internal static class Init
 {
     public static async Task ExecuteAsync(string gitPath, SvnRepo svn)
-    {
-        Repository.Init(gitPath);
-        using var repo = new Repository(gitPath);
-
-        var author = repo.BuildSignature();
-
+    {    
         var exportInfo = svn.Export();
         var revision = exportInfo.Revision;
         Console.WriteLine($"SVN Revision: {revision}");
@@ -25,6 +20,11 @@ internal static class Init
 
         var logResult = await svn.LogAsync(svnLogArgs);
         var signature = new Signature(logResult.Author ?? Constants.UNKNOWN, Constants.DEFAULT_EMAIL, logResult.Time);
+
+        Repository.Init(gitPath);
+        using var repo = new Repository(gitPath);
+
+        var author = repo.BuildSignature();
         repo.StageAndCommit(logResult.LogMessage ?? "", signature);
         repo.Branches.Rename(repo.Branches.First(), Constants.SVN_BRANCH_NAME);
         repo.ApplyTag($"Revision/{revision}");
