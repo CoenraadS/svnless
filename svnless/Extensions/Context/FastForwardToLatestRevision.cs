@@ -7,11 +7,12 @@ namespace SvnLess.Actions;
 
 internal static partial class ContextExtensions
 {
-    public static async Task<long> IterateToLatestRevision(this Context context)
+    public static async Task<long> IterateToLocalSVNRevision(this Context context)
     {
         var git = context.Git;
+        context.Svn.Client.Update(context.Svn.RealSvnPath);
         var localRevision = git.GetLatestLocalRevision();
-        var latestRevision = (await context.Svn.InfoAsync()).Revision;
+        var latestRevision = (await context.Svn.InfoAsync(context.Svn.RealSvnPath)).Revision;
 
         for (long i = localRevision; i < latestRevision; i++)
         {
@@ -25,7 +26,7 @@ internal static partial class ContextExtensions
                 Limit = 1,
             };
 
-            var logResult = await context.Svn.LogAsync(svnLogArgs);
+            var logResult = context.Svn.GetLog(svnLogArgs, context.Svn.RealSvnPath);
             var signature = new Signature(logResult.Author ?? Constants.UNKNOWN, Constants.DEFAULT_EMAIL, logResult.Time);
             git.StageAndCommit(logResult.LogMessage ?? "", signature);
 
@@ -33,9 +34,9 @@ internal static partial class ContextExtensions
             git.ApplyTag(tag);
         }
 
-        if (git.GetLatestLocalRevision() != (await context.Svn.InfoAsync()).Revision)
+        if (git.GetLatestLocalRevision() != latestRevision)
         {
-            throw new InvalidOperationException();
+            throw new InvalidOperationException("For some reason not in sync with local SVN revision");
         }
 
         return latestRevision;
@@ -52,7 +53,7 @@ internal static partial class ContextExtensions
         var localRevision = git.GetLatestLocalRevision();
         git.CheckoutRevisionBranch();
 
-        var latestRevision = requestedRevision ?? (await context.Svn.InfoAsync()).Revision;
+        var latestRevision = requestedRevision ?? (await context.Svn.InfoAsync(context.Svn.Remote.Uri.ToString())).Revision;
 
         if (latestRevision == localRevision)
         {
@@ -78,7 +79,7 @@ internal static partial class ContextExtensions
                 Limit = 1,
             };
 
-            var logResult = await context.Svn.LogAsync(svnLogArgs);
+            var logResult = context.Svn.GetLog(svnLogArgs, context.Svn.Remote.Uri.ToString());
             var signature = new Signature(logResult.Author ?? Constants.UNKNOWN, Constants.DEFAULT_EMAIL, logResult.Time);
             git.StageAndCommit(logResult.LogMessage ?? "", signature);
         }

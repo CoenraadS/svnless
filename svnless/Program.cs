@@ -68,7 +68,7 @@ internal partial class Program
 
         if (o.Action == Action.SVNToGitDiffSync)
         {
-            var revision = context.IterateToLatestRevision().GetAwaiter().GetResult();
+            var revision = context.IterateToLocalSVNRevision().GetAwaiter().GetResult();
             Console.WriteLine($"Updated Git to Revision {revision}");
             return;
         }

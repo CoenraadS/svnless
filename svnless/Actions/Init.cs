@@ -18,7 +18,7 @@ internal static class Init
             Limit = 1,
         };
 
-        var logResult = await svn.LogAsync(svnLogArgs);
+        var logResult = svn.GetLog(svnLogArgs, svn.Remote.Uri.ToString());
         var signature = new Signature(logResult.Author ?? Constants.UNKNOWN, Constants.DEFAULT_EMAIL, logResult.Time);
 
         Repository.Init(gitPath);
