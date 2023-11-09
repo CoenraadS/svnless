@@ -18,7 +18,7 @@ internal static partial class ContextExtensions
             processStartInfo.RedirectStandardError = true;
             processStartInfo.UseShellExecute = false;
             processStartInfo.FileName = "git";
-            processStartInfo.Arguments = $"apply --ignore-space-change --ignore-whitespace --whitespace=nowarn --unsafe-paths";
+            processStartInfo.Arguments = $"apply --ignore-space-change --ignore-whitespace --whitespace=nowarn --unsafe-paths --directory=svn";
 
             var process = new Process
             {
@@ -64,7 +64,7 @@ internal static partial class ContextExtensions
             processStartInfo.RedirectStandardError = true;
             processStartInfo.UseShellExecute = false;
             processStartInfo.FileName = "git";
-            processStartInfo.Arguments = $"apply --ignore-space-change --ignore-whitespace --whitespace=nowarn";
+            processStartInfo.Arguments = $"apply --ignore-space-change --ignore-whitespace --whitespace=nowarn --directory=svn";
 
             var process = new Process
             {
