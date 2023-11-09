@@ -122,13 +122,15 @@ internal partial class Program
 
         await context.ApplyDiffToSvnRepositoryAsync(gitToSVNDiff);
 
-        if (context.Svn.Client.Update(context.Svn.RealSvnPath, out SvnUpdateResult result))
-        {
-            return result.Revision;
-        }
-        else
-        {
-            throw new InvalidOperationException("Could not update SVN");
-        }
+        return 0;
+
+        //if (context.Svn.Client.Update(context.Svn.RealSvnPath, out SvnUpdateResult result))
+        //{
+        //    return result.Revision;
+        //}
+        //else
+        //{
+        //    throw new InvalidOperationException("Could not update SVN");
+        //}
     }
 }

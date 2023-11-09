@@ -14,29 +14,26 @@ internal static partial class ContextExtensions
         var localRevision = git.GetLatestLocalRevision();
         var latestRevision = (await context.Svn.InfoAsync(context.Svn.RealSvnPath)).Revision;
 
-        for (long i = localRevision; i < latestRevision; i++)
+        var svnLogArgs = new SvnLogArgs
         {
-            var diff = context.Svn.GetGitDiff(i, i + 1);
+            Range = new SvnRevisionRange(new SvnRevision(localRevision), SvnRevision.Head)
+        };
+
+        var logResults = context.Svn.GetLogs(svnLogArgs, context.Svn.RealSvnPath);
+
+        var previous = logResults.First();
+        foreach (var current in logResults.Skip(1))
+        {
+            var diff = context.Svn.GetGitDiff(previous.Revision, current.Revision);
 
             await context.ApplyDiffToGitRepository(diff);
 
-            var svnLogArgs = new SvnLogArgs
-            {
-                Range = new SvnRevisionRange(new SvnRevision(localRevision), new SvnRevision(localRevision)),
-                Limit = 1,
-            };
+            var signature = new Signature(current.Author ?? Constants.UNKNOWN, Constants.DEFAULT_EMAIL, current.Time);
+            git.StageAndCommit(current.LogMessage ?? "", signature);
 
-            var logResult = context.Svn.GetLog(svnLogArgs, context.Svn.RealSvnPath);
-            var signature = new Signature(logResult.Author ?? Constants.UNKNOWN, Constants.DEFAULT_EMAIL, logResult.Time);
-            git.StageAndCommit(logResult.LogMessage ?? "", signature);
-
-            var tag = $"Revision/{i + 1}";
+            var tag = $"Revision/{current.Revision}";
             git.ApplyTag(tag);
-        }
-
-        if (git.GetLatestLocalRevision() != latestRevision)
-        {
-            throw new InvalidOperationException("For some reason not in sync with local SVN revision");
+            previous = current;
         }
 
         return latestRevision;
@@ -79,7 +76,7 @@ internal static partial class ContextExtensions
                 Limit = 1,
             };
 
-            var logResult = context.Svn.GetLog(svnLogArgs, context.Svn.Remote.Uri.ToString());
+            var logResult = context.Svn.GetLogs(svnLogArgs, context.Svn.Remote.Uri.ToString()).First();
             var signature = new Signature(logResult.Author ?? Constants.UNKNOWN, Constants.DEFAULT_EMAIL, logResult.Time);
             git.StageAndCommit(logResult.LogMessage ?? "", signature);
         }

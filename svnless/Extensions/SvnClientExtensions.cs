@@ -28,11 +28,11 @@ internal static class SvnClientExtensions
         throw new Exception($"Could not export svn from: {svn.Remote.Uri}");
     }
 
-    public static SvnLogEventArgs GetLog(this SvnRepo svn, SvnLogArgs args, string svnPath)
+    public static IReadOnlyList<SvnLogEventArgs> GetLogs(this SvnRepo svn, SvnLogArgs args, string svnPath)
     {
         if (svn.Client.GetLog(svnPath, args, out var logItems) && logItems.Any())
         {
-            return logItems.First();
+            return logItems;
         }
 
         throw new InvalidOperationException("No log messages found");
@@ -41,8 +41,8 @@ internal static class SvnClientExtensions
     public static SVNToGitDiff GetGitDiff(this SvnRepo svn, long from, long to)
     {
         using var ms = new MemoryStream();
-        var fromTarget = new SvnUriTarget(svn.RealSvnPath, from);
-        var toTarget = new SvnUriTarget(svn.RealSvnPath, to);
+        var fromTarget = new SvnUriTarget(svn.Remote.Uri, from);
+        var toTarget = new SvnUriTarget(svn.Remote.Uri, to);
 
         svn.Client.Diff(fromTarget, toTarget, new SvnDiffArgs() { UseGitFormat = true }, ms);
         var diffString = Encoding.UTF8.GetString(ms.ToArray());

@@ -43,7 +43,7 @@ internal static partial class ContextExtensions
             }
         });
 
-        context.Svn.Client.Commit(context.Svn.RealSvnPath, new SharpSvn.SvnCommitArgs() { LogMessage = diff.Message });
+        //context.Svn.Client.Commit(context.Svn.RealSvnPath, new SharpSvn.SvnCommitArgs() { LogMessage = diff.Message });
     }
 
     public static async Task ApplyDiffToGitRepository(this Context context, SVNToGitDiff gitDiff)
@@ -72,7 +72,7 @@ internal static partial class ContextExtensions
             };
             process.Start();
 
-            var diff = gitDiff.Diff.ReplaceLineEndings("\n");
+            var diff = gitDiff.Diff.ReplaceLineEndings("\n").Replace("a/trunk", "a").Replace("b/trunk", "b");
 
             var streamWriter = process.StandardInput;
             streamWriter.WriteLine(diff);
