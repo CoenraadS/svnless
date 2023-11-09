@@ -76,7 +76,7 @@ internal static partial class ContextExtensions
                 Limit = 1,
             };
 
-            var logResult = context.Svn.GetLogs(svnLogArgs, context.Svn.Remote.Uri.ToString()).First();
+            var logResult = context.Svn.GetLogs(svnLogArgs, context.Svn.RealSvnPath).First();
             var signature = new Signature(logResult.Author ?? Constants.UNKNOWN, Constants.DEFAULT_EMAIL, logResult.Time);
             git.StageAndCommit(logResult.LogMessage ?? "", signature);
         }

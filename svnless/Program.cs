@@ -42,11 +42,11 @@ internal partial class Program
             throw new InvalidOperationException("Failed to parse action");
         }
 
-        var svnRepo = new SvnRepo(new SvnClient(), new SvnUriTarget(o.SVNRemote), Path.Combine(o.GitLocal), o.SVNLocal);
+        var svnRepo = new SvnRepo(new SvnClient(), new SvnUriTarget(o.SVNRemote), Path.Combine(o.GitLocal, "svn"), o.SVNLocal);
 
         if (o.Action == Action.GitInit)
         {
-            Init.ExecuteAsync(o.GitLocal, svnRepo).Wait();
+            Init.Execute(o.GitLocal, svnRepo);
             return;
         }
 
