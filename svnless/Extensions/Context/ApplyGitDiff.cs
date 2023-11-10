@@ -18,7 +18,7 @@ internal static partial class ContextExtensions
             processStartInfo.RedirectStandardError = true;
             processStartInfo.UseShellExecute = false;
             processStartInfo.FileName = "git";
-            processStartInfo.Arguments = $"apply --ignore-space-change --ignore-whitespace --whitespace=nowarn --unsafe-paths --directory=svn";
+            processStartInfo.Arguments = $"apply --ignore-space-change --ignore-whitespace --whitespace=nowarn --unsafe-paths";
 
             var process = new Process
             {
@@ -26,10 +26,10 @@ internal static partial class ContextExtensions
             };
             process.Start();
 
-            var diffSanitized = diff.Content.ReplaceLineEndings("\n");
+            var diffSanitized = diff.Content.Replace("a/svn/", "a/").Replace("b/svn/", "b/");
 
             var streamWriter = process.StandardInput;
-            streamWriter.WriteLine(diff);
+            streamWriter.WriteLine(diffSanitized);
             streamWriter.Close();
             var error = process.StandardError.ReadToEnd();
             process.WaitForExit();
@@ -39,7 +39,7 @@ internal static partial class ContextExtensions
                 await File.WriteAllTextAsync(tmp, diffSanitized);
                 throw new InvalidOperationException($"Git Apply Failed.{Environment.NewLine}" +
                     $"{error}{Environment.NewLine}" +
-                    $"Run: git {processStartInfo.Arguments} --reject");
+                    $"Run: git {processStartInfo.Arguments} --reject {tmp}");
             }
         });
 
