@@ -56,6 +56,13 @@ internal static partial class ContextExtensions
 
         context.Git.CheckoutRevisionBranch();
 
+        var diff = gitDiff.Diff.ReplaceLineEndings("\n").Replace("a/trunk", "a").Replace("b/trunk", "b");
+
+        if (diff.Contains("Modified: svn:externals"))
+        {
+            throw new InvalidOperationException("svn:externals was modified, do a hard pull instead");
+        }
+
         await Task.Run(async () =>
         {
             var processStartInfo = new ProcessStartInfo();
@@ -70,9 +77,8 @@ internal static partial class ContextExtensions
             {
                 StartInfo = processStartInfo
             };
-            process.Start();
 
-            var diff = gitDiff.Diff.ReplaceLineEndings("\n").Replace("a/trunk", "a").Replace("b/trunk", "b");
+            process.Start();
 
             var streamWriter = process.StandardInput;
             streamWriter.WriteLine(diff);
@@ -85,7 +91,7 @@ internal static partial class ContextExtensions
                 await File.WriteAllTextAsync(tmp, diff);
                 throw new InvalidOperationException($"Git Apply Failed.{Environment.NewLine}" +
                     $"{error}{Environment.NewLine}" +
-                    $"Run: git {processStartInfo.Arguments} --reject");
+                    $"Run: git {processStartInfo.Arguments} --reject {tmp}");
             }
         });
     }
